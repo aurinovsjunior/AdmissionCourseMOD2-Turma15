@@ -3,10 +3,9 @@ import pygame
 from dino_runner.components.dinosaur import Dinosaur
 
 from dino_runner.components.obstacles.obstacle_manager import ObstacleManager
-from dino_runner.components.obstacles.obstacle_manager2 import ObstacleManager2
-from dino_runner.components.obstacles.obstacle_manager3 import ObstacleManager3
 from dino_runner.utils.constants import BG, ICON, SCREEN_HEIGHT, SCREEN_WIDTH, TITLE, FPS
 
+FONT_STYLE = "freesansbold.ttf"
 
 class Game:
     def __init__(self):
@@ -16,34 +15,50 @@ class Game:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
         self.playing = False
-        self.game_speed = 15
+        self.running = False
+        self.game_speed = 10
         self.x_pos_bg = 0
         self.y_pos_bg = 380
+        self.score = 0
+        self.death_count = 0
         self.player = Dinosaur()
         self.obstacle_manager = ObstacleManager()
-        self.obstacle_manager2 = ObstacleManager2()
-        self.obstacle_manager3 = ObstacleManager3()
+        self.score = 0
+
+    def execute(self):
+        self.running = True
+        while self.running:
+            if not self.playing:
+                self.show_menu()
+
+        pygame.display.quit()
+        pygame.quit()    
         
     def run(self):
         # Game loop: events - update - draw
         self.playing = True
+        self.obstacle_manager.reset_obstacles()
         while self.playing:
             self.events()
             self.update()
-            self.draw()
-        pygame.quit()    
+            self.draw()   
 
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.playing = False
+                self.running = False
 
     def update(self):
         user_input = pygame.key.get_pressed()
-        self.obstacle_manager.update(self)
-        self.obstacle_manager2.update(self)
-        self.obstacle_manager3.update(self)
         self.player.update(user_input)
+        self.obstacle_manager.update(self)
+        self.update_score()
+
+    def update_score(self):
+        self.score += 1
+        if self.score % 100 == 0:
+            self.game_speed += 5
 
     def draw(self):
         self.clock.tick(FPS)
@@ -51,8 +66,7 @@ class Game:
         self.draw_background()
         self.player.draw(self.screen)
         self.obstacle_manager.draw(self.screen)
-        self.obstacle_manager2.draw(self.screen)
-        self.obstacle_manager3.draw(self.screen)
+        self.draw_score()
         pygame.display.update()
         pygame.display.flip()
 
@@ -64,3 +78,46 @@ class Game:
             self.screen.blit(BG, (image_width + self.x_pos_bg, self.y_pos_bg))
             self.x_pos_bg = 0
         self.x_pos_bg -= self.game_speed
+
+    def draw_score(self):
+        font = pygame.font.Font(FONT_STYLE, 22)
+        text = font.render(f"SCORE: {self.score}", True, (0, 0, 0))
+        text_rect = text.get_rect()
+        text_rect_center = (800, 10)
+        self.screen.blit(text, text_rect_center)
+
+    def handle_events_on_menu(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.playing = False
+                self.running = False
+            elif event.type == pygame.KEYDOWN:
+                self.run()    
+
+    def show_menu(self):
+        self.screen.fill((255, 255, 255))
+        half_screen_height = SCREEN_HEIGHT // 2
+        half_screen_width = SCREEN_WIDTH // 2
+
+        if self.death_count == 0:
+            font = pygame.font.Font(FONT_STYLE, 22)
+            text = font.render("Aperte qualquer tecla para iniciar", True, (0, 0, 0))
+            text_rect = text.get_rect()
+            text_rect_center = (half_screen_height - 1, half_screen_width - 300)
+            self.screen.blit(text, text_rect_center)
+        elif self.death_count > 0:
+            font = pygame.font.Font(FONT_STYLE, 22)
+            text = font.render("Você perdeu, aperte para reiniciar", True, (0, 0, 0))
+            ext_rect = text.get_rect()
+            text_rect_center = (half_screen_height - 1, half_screen_width - 300)
+            self.screen.blit(text, text_rect_center)
+            text = font.render("Sua pontuação: ", + (self.score), True)
+            ext_rect = text.get_rect()
+            text_rect_center = (half_screen_height - 1, half_screen_width - 200)
+            self.screen.blit(text, text_rect_center)
+            self.screen.blit(ICON, (half_screen_width - 20, half_screen_height - 14))
+        else:
+            return
+
+        pygame.display.update()
+        self.handle_events_on_menu()
