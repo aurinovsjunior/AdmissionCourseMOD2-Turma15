@@ -111,11 +111,11 @@ class Game:
             ext_rect = text.get_rect()
             text_rect_center = (half_screen_height - 1, half_screen_width - 300)
             self.screen.blit(text, text_rect_center)
-            text = font.render("Sua pontuação: ", + (self.score), True)
+            text = font.render(f"Sua pontuação: {self.score}", "Mortes: {}", True, (255, 255, 255))
             ext_rect = text.get_rect()
             text_rect_center = (half_screen_height - 1, half_screen_width - 200)
             self.screen.blit(text, text_rect_center)
-            self.screen.blit(ICON, (half_screen_width - 20, half_screen_height - 14))
+            self.screen.blit(ICON, (half_screen_width - 10, half_screen_height - 14))
         else:
             return
 
